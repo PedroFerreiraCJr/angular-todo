@@ -1,1 +1,36 @@
-<p>todo works!</p>
+<form [formGroup]="form" class="needs-validation" novalidate>
+  <div class="form-group">
+    <label for="name">Nome</label>
+    <input type="text" id="name" class="form-control" placeholder="Forneça um nome para a tarefa"
+      formControlName="name"
+      [ngClass]="{
+        'is-valid': fieldDontHasAnyError('name'),
+        'is-invalid': fieldHasError('name', 'required') || fieldHasError('name', 'minlength')
+      }">
+    <div class="invalid-feedback" *ngIf="fieldHasError('name', 'required')">
+      {{ getFieldError('name', 'required') }}
+    </div>
+    <div class="invalid-feedback" *ngIf="fieldHasError('name', 'minlength')">
+      {{ getFieldError('name', 'minlength') }}
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="description">Descrição</label>
+    <input type="text" id="description" class="form-control" placeholder="Forneça uma descrição para a tarefa"
+      formControlName="description"
+      [ngClass]="{
+        'is-valid': fieldDontHasAnyError('description'),
+        'is-invalid': fieldHasError('description', 'required') || fieldHasError('description', 'minlength')
+      }">
+    <div class="invalid-feedback" *ngIf="fieldHasError('description', 'required')">
+      {{ getFieldError('description', 'required') }}
+    </div>
+    <div class="invalid-feedback" *ngIf="fieldHasError('description', 'minlength')">
+      {{ getFieldError('description', 'minlength') }}
+    </div>
+  </div>
+  <div class="d-flex justify-content-end">
+    <button class="btn btn-secondary mt-2 mb-2">Cancelar</button>
+    <button class="btn btn-success mt-2 mb-2 ml-2">Confirmar</button>
+  </div>
+</form>
