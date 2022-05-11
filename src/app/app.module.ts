@@ -11,13 +11,15 @@ import { AppComponent } from './app.component';
 import { TodoComponent } from './components/todo/todo.component';
 import { TodoListComponent } from './components/todo-list/todo-list.component';
 import { BreadCrumbComponent } from './components/bread-crumb/bread-crumb.component';
+import { ModalComponent } from './components/modal/modal.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     TodoComponent,
     TodoListComponent,
-    BreadCrumbComponent
+    BreadCrumbComponent,
+    ModalComponent
   ],
   imports: [
     BrowserModule,

@@ -1,8 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+
 import { Subscription } from 'rxjs';
+
 import { BreadCrumbService } from '../bread-crumb/bread-crumb.service';
+import { ModalService } from '../modal/modal.service';
 import { TodoService } from './todo.service';
 
 @Component({
@@ -19,7 +22,8 @@ export class TodoComponent implements OnInit, OnDestroy {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly todoService: TodoService
+    private readonly todoService: TodoService,
+    private readonly modalService: ModalService
     ) { }
 
   ngOnInit(): void {
@@ -72,8 +76,10 @@ export class TodoComponent implements OnInit, OnDestroy {
     this.subscription = this.todoService.create(todo).subscribe((response) => {
       // caso seja sucesso
       if (response.status === 201) {
-        alert('Tarefa criada com sucesso!');
-        this.reset();
+        this.modalService.open((result) => {
+          console.log(result);
+          this.reset();
+        });
       }
     });
   }
