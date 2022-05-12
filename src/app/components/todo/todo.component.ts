@@ -1,3 +1,5 @@
+import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +24,7 @@ export class TodoComponent implements OnInit, OnDestroy {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly location: Location,
     private readonly todoService: TodoService,
     private readonly modalService: ModalService
     ) { }
@@ -68,23 +71,37 @@ export class TodoComponent implements OnInit, OnDestroy {
   }
 
   public onCancel(): void {
-    this.router.navigate(['/list'], { relativeTo: this.route });
+    this.location.back();
   }
 
   public onSubmit(): void {
     const todo = this.form.value;
     this.subscription = this.todoService.create(todo).subscribe((response) => {
-      // caso seja sucesso
       if (response.status === 201) {
-        this.modalService.open((result) => {
-          console.log(result);
-          this.reset();
-        });
+        this.onSuccessResponse();
       }
+      else if (response.status >= 400) {
+        this.onErrorResponse(null);
+      }
+    }, (error) => {
+      this.onErrorResponse(error);
     });
   }
 
   private reset(): void {
     this.form.reset();
+  }
+
+  private onSuccessResponse(): void {
+    this.modalService.openModal((_) => {
+      this.reset();
+      setTimeout(() => {
+        this.router.navigate(['/list'], { relativeTo: this.route });
+      }, 500);
+    });
+  }
+
+  private onErrorResponse(error: HttpErrorResponse | null): void {
+    this.modalService.openModal((_) => { }, 'danger', 'Falha no cadastro da tarefa');
   }
 }
