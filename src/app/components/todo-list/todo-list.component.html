@@ -1,1 +1,47 @@
-<p>todo-list works!</p>
+<div class="mt-4">
+  <form [formGroup]="form" class="mb-2" novalidate>
+    <div class="row">
+      <div class="col-sm-8">
+        <div class="input-group">
+          <input type="search" class="form-control" formControlName="search">          
+          <button class="btn btn-outline-success" type="button" (click)="onSubmit()">Pesquisar</button>
+        </div>
+        <div class="invalid-feedback">
+          Example invalid input group feedback
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="d-flex justify-content-end">
+    <button class="btn btn-primary" type="button" (click)="onNew()">Nova Tarefa</button>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col" style="width: 20%;">Nome</th>
+        <th scope="col" style="width: 60%;">Descrição</th>
+        <th scope="col" style="width: 10%;">Data</th>
+        <th scope="col" style="width: 5%;">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let todo of todos$ | async">
+        <td>{{ todo.name }}</td>
+        <td>{{ todo.description }}</td>
+        <td>{{ todo.date | date: 'dd/MM/yyyy' }}</td>
+        <td style="text-align: center;">
+          <div ngbDropdown class="d-inline-block">
+            <button type="button" class="btn btn-outline-warn" id="dropdownActions"
+              ngbDropdownToggle></button>
+            <div ngbDropdownMenu aria-labelledby="dropdownActions">
+              <button ngbDropdownItem (click)="onEdit(todo?.id || 0)">Editar</button>
+              <button ngbDropdownItem (click)="onRemove(todo?.id || 0)">Remover</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>  
+</div>

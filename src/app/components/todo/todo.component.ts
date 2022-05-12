@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Subscription } from 'rxjs';
+import { Todo } from 'src/app/model/todo.model';
 
 import { BreadCrumbService } from '../bread-crumb/bread-crumb.service';
 import { ModalService } from '../modal/modal.service';
@@ -75,7 +76,12 @@ export class TodoComponent implements OnInit, OnDestroy {
   }
 
   public onSubmit(): void {
-    const todo = this.form.value;
+    const todo: Todo = {
+      name: this.form.get('name')?.value,
+      description: this.form.get('description')?.value,
+      date: new Date()
+    };
+
     this.subscription = this.todoService.create(todo).subscribe((response) => {
       if (response.status === 201) {
         this.onSuccessResponse();
