@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { filter, map, Observable, of, switchMap, tap } from 'rxjs';
+import { distinctUntilChanged, filter, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
 import { Todo } from 'src/app/model/todo.model';
 
 import { BreadCrumbService } from '../bread-crumb/bread-crumb.service';
@@ -30,12 +30,13 @@ export class TodoListComponent implements OnInit {
       search: ['', [Validators.min(2)]]
     });
 
-    this.todos$ = this.todoService.list();
-
     /**
      * Implementeação de busca reativa através do observable valuechanges
     */
     this.todos$ = this.form.get('search')?.valueChanges.pipe(
+      tap(console.log),
+      startWith(''),
+      distinctUntilChanged(),
       switchMap(value => this.todoService.list()
         .pipe(
           map(todos =>
@@ -63,7 +64,7 @@ export class TodoListComponent implements OnInit {
      * Dispara o evento de valuechanges programaticamente no formcontrol
      * https://stackoverflow.com/questions/42435736/how-to-fire-the-valuechanges-programmatically
     */
-    this.form.get('search')?.updateValueAndValidity({ onlySelf: false, emitEvent: true });
+     this.form.get('search')?.updateValueAndValidity({ onlySelf: false, emitEvent: true });
   }
 
   public onNew(): void {
