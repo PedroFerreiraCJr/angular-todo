@@ -13,6 +13,7 @@ import { TodoListComponent } from './components/todo-list/todo-list.component';
 import { BreadCrumbComponent } from './components/bread-crumb/bread-crumb.component';
 import { ModalComponent } from './components/modal/modal.component';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { AutofocusDirective } from './directives/autofocus.directive';
     TodoListComponent,
     BreadCrumbComponent,
     ModalComponent,
-    AutofocusDirective
+    AutofocusDirective,
+    ConfirmModalComponent
   ],
   imports: [
     BrowserModule,

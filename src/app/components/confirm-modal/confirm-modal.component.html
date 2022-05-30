@@ -1,0 +1,11 @@
+<div class="modal-body">
+  <div class="alert alert-{{ type }}" role="alert">
+    {{ message }}
+  </div>
+  <div class="d-flex justify-content-end">
+    <button type="button" class="btn btn-outline-dark"
+      (click)="confirm()">Sim</button>
+    <button type="button" class="btn btn-outline-dark"
+      (click)="cancelar()">Cancelar</button>
+  </div>
+</div>

@@ -2,11 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { distinctUntilChanged, filter, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
+import { distinctUntilChanged, map, Observable, startWith, switchMap, tap } from 'rxjs';
 import { Todo } from 'src/app/model/todo.model';
 
 import { BreadCrumbService } from '../bread-crumb/bread-crumb.service';
+import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
+import { ModalService } from '../modal/modal.service';
 import { TodoService } from '../todo/todo.service';
+
+import { NgbActiveModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-todo-list',
@@ -22,7 +26,8 @@ export class TodoListComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly todoService: TodoService
+    private readonly todoService: TodoService,
+    private readonly modalService: ModalService
   ) { }
 
   ngOnInit(): void {
@@ -31,8 +36,15 @@ export class TodoListComponent implements OnInit {
     });
 
     /**
-     * Implementeação de busca reativa através do observable valuechanges
+     * Implementação de busca reativa através do observable valuechanges
     */
+    this.subscribeValueChanges();
+
+    BreadCrumbService.publishBase('Todo List');
+    BreadCrumbService.publishComponent('Listagem');
+  }
+
+  private subscribeValueChanges(): void {
     this.todos$ = this.form.get('search')?.valueChanges.pipe(
       tap(console.log),
       startWith(''),
@@ -46,9 +58,6 @@ export class TodoListComponent implements OnInit {
         )
       )
     );
-
-    BreadCrumbService.publishBase('Todo List');
-    BreadCrumbService.publishComponent('Listagem');
   }
 
   private onSearch(value: string, t: Todo): boolean {
@@ -81,9 +90,29 @@ export class TodoListComponent implements OnInit {
 
   public onRemove(id: number): void {
     if (!id) {
+      this.modalService.openModal((_) => {}, 'error', 'Parâmetro inválido.');
       return;
     }
 
-    console.log('remover', id);
+    this.modalService.open(
+      ConfirmModalComponent,
+      { 'backdrop': 'static', 'keyboard': false },
+      (modal: NgbModalRef) => {
+        modal.componentInstance.message = 'Deseja realmente remover o Todo?';
+        modal.componentInstance.confirmEvent.subscribe((result: { active: NgbActiveModal, action: string }) => {
+          result.active.close('confirmar');
+          this.todoService.delete(id).subscribe((response) => {
+            this.subscribeValueChanges();
+          }, error => {
+            result.active.close('falha');
+            this.modalService.openModal((_) => {}, 'error', 'Houve um erro na deleção.');
+          });
+        });
+
+        modal.componentInstance.cancelEvent.subscribe((result: { active: NgbActiveModal, action: string }) => {
+          result.active.close('cancelar');
+        });
+      }
+    );
   }
 }

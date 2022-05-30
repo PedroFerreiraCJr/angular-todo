@@ -28,4 +28,12 @@ export class TodoService {
   public list(): Observable<Todo[]> {
     return this.http.get<Todo[]>(`${environment.API_URL}/todos`);
   }
+
+  public edit(id: number, todo: Todo) {
+
+  }
+
+  public delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${environment.API_URL}/todos/${id}`, { observe: 'response'}).pipe(take(1));
+  }
 }
