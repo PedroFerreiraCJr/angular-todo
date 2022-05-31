@@ -1,6 +1,6 @@
-import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -28,16 +28,36 @@ export class TodoComponent implements OnInit, OnDestroy {
     private readonly location: Location,
     private readonly todoService: TodoService,
     private readonly modalService: ModalService
-    ) { }
+  ) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
+      id: [null, []],
       name: [null, [Validators.required, Validators.minLength(5)]],
       description: [null, [Validators.required, Validators.minLength(10)]],
     });
 
     BreadCrumbService.publishBase('Todo List');
     BreadCrumbService.publishComponent('Novo');
+
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id') as number | null;
+      if (id) {
+        // deve carregar e aplicar os valores aos campos do form
+        this.todoService.getById(id).subscribe({
+          next: todo => {
+            this.form.patchValue({
+              id: todo.id,
+              name: todo.name,
+              description: todo.description
+            });
+          },
+          error: (e) => {
+            console.log(e);
+          }
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -57,16 +77,14 @@ export class TodoComponent implements OnInit, OnDestroy {
   public getFieldError(field: string, error: string): string {
     const f = this.form.get(field);
     const e = f?.getError(error);
-    
+
     if (e && error === 'required') {
-      return 'O campo é obrigatório';
+      return 'O campo é obrigatório.';
     }
 
     if (e && error === 'minlength') {
       return `O comprimento mínimo é de ${e.requiredLength} carácteres.`;
     }
-
-    console.log(e);
 
     return '';
   }
@@ -76,38 +94,73 @@ export class TodoComponent implements OnInit, OnDestroy {
   }
 
   public onSubmit(): void {
+    const id = this.form.get('id')?.value;
+
     const todo: Todo = {
       name: this.form.get('name')?.value,
       description: this.form.get('description')?.value,
       date: new Date()
     };
 
-    this.subscription = this.todoService.create(todo).subscribe((response) => {
-      if (response.status === 201) {
-        this.onSuccessResponse();
-      }
-      else if (response.status >= 400) {
-        this.onErrorResponse(null);
-      }
-    }, (error) => {
-      this.onErrorResponse(error);
-    });
+    if (!id) {
+      this.subscription = this.todoService.create(todo).subscribe({
+        next: (response) => {
+          if (response.status === 201) {
+            this.onSuccessResponse();
+          }
+          else if (response.status >= 400) {
+            this.onErrorResponse(null);
+          }
+        },
+        error: e => {
+          this.onErrorResponse(e);
+        }
+      });
+    }
+    else {
+      this.subscription = this.todoService.update(id, todo).subscribe({
+        next: (response: HttpResponse<any>) => {
+          if (this.isStatusOk(response)) {
+            this.onSuccessResponse(false);
+          }
+          else if (response.status >= 400 && response.status <= 499) {
+            this.onErrorResponse(null);
+          }
+        },
+        error: e => {
+          this.onErrorResponse(e);
+        }
+      });
+    }
+  }
+
+  private isStatusOk(response: HttpResponse<any>): boolean {
+    return response.status === 200;
   }
 
   private reset(): void {
     this.form.reset();
   }
 
-  private onSuccessResponse(): void {
+  private onSuccessResponse(creation: boolean = true): void {
     this.modalService.openModal((_) => {
       this.reset();
       setTimeout(() => {
         this.router.navigate(['/list'], { relativeTo: this.route });
       }, 500);
-    });
+    }, 'success', (creation) ? 'Tarefa criada com sucesso.' : 'Tarefa atualizada com sucesso.');
   }
 
-  private onErrorResponse(error: HttpErrorResponse | null): void {
-    this.modalService.openModal((_) => { }, 'danger', 'Falha no cadastro da tarefa');
+  private onErrorResponse(e: HttpErrorResponse | null): void {
+    if (this.isStatusClientError(e)) {
+      this.modalService.openModal((_) => { }, 'danger', 'Falha no cadastro - Parâmetros inválidos.');
+      return;
+    }
+
+    this.modalService.openModal((_) => { }, 'danger', 'Falha no cadastro da tarefa.');
+  }
+
+  private isStatusClientError(e: HttpErrorResponse | null): boolean {
+    return !!(e && e.status && e.status >= 400 && e.status <= 499);
   }
 }

@@ -14,6 +14,9 @@ const routes: Routes = [
   {
     path: 'list', component: TodoListComponent
   },
+  {
+    path: 'edit/:id', component: TodoComponent
+  },
 ];
 
 @NgModule({

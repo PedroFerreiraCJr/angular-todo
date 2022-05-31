@@ -29,8 +29,12 @@ export class TodoService {
     return this.http.get<Todo[]>(`${environment.API_URL}/todos`);
   }
 
-  public edit(id: number, todo: Todo) {
+  public getById(id: number): Observable<Todo> {
+    return this.http.get<Todo>(`${environment.API_URL}/todos/${id}`).pipe(take(1));
+  }
 
+  public update(id: number, todo: Todo): Observable<any> {
+    return this.http.put(`${environment.API_URL}/todos/${id}`, todo, { observe: 'response' }).pipe(take(1));
   }
 
   public delete(id: number): Observable<any> {

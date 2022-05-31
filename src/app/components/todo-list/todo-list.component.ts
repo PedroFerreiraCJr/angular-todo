@@ -82,10 +82,15 @@ export class TodoListComponent implements OnInit {
 
   public onEdit(id: number): void {
     if (!id) {
+      this.handleErrorModal();
       return;
     }
 
-    console.log('editar', id);
+    /**
+     * passa o parâmetro 'id' para a rota ativada
+     * link: https://stackoverflow.com/questions/44864303/send-data-through-routing-paths-in-angular
+    */
+    this.router.navigate(['/edit', id], { relativeTo: this.route });
   }
 
   public onRemove(id: number): void {
