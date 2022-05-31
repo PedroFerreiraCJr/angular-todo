@@ -73,7 +73,7 @@ export class TodoListComponent implements OnInit {
      * Dispara o evento de valuechanges programaticamente no formcontrol
      * https://stackoverflow.com/questions/42435736/how-to-fire-the-valuechanges-programmatically
     */
-     this.form.get('search')?.updateValueAndValidity({ onlySelf: false, emitEvent: true });
+    this.form.get('search')?.updateValueAndValidity({ onlySelf: false, emitEvent: true });
   }
 
   public onNew(): void {
@@ -90,29 +90,52 @@ export class TodoListComponent implements OnInit {
 
   public onRemove(id: number): void {
     if (!id) {
-      this.modalService.openModal((_) => {}, 'error', 'Parâmetro inválido.');
+      this.handleErrorModal();
       return;
     }
 
+    this.handleSuccessModal(id);
+  }
+
+  private handleErrorModal(): void {
+    this.modalService.openModal((_) => { }, 'error', 'Parâmetro inválido.');
+  }
+
+  private handleSuccessModal(id: number) {
+    /**
+     * O método open, abaixo, recebe um component e configurações que serão usados para abrir uma modal.
+     * Após a instanciação do component na modal, é recebido um NgbModalRef em um callback para fazer
+     * a configuração dos inputs do component informado.
+    */
     this.modalService.open(
       ConfirmModalComponent,
       { 'backdrop': 'static', 'keyboard': false },
       (modal: NgbModalRef) => {
-        modal.componentInstance.message = 'Deseja realmente remover o Todo?';
-        modal.componentInstance.confirmEvent.subscribe((result: { active: NgbActiveModal, action: string }) => {
-          result.active.close('confirmar');
-          this.todoService.delete(id).subscribe((response) => {
-            this.subscribeValueChanges();
-          }, error => {
-            result.active.close('falha');
-            this.modalService.openModal((_) => {}, 'error', 'Houve um erro na deleção.');
-          });
-        });
-
-        modal.componentInstance.cancelEvent.subscribe((result: { active: NgbActiveModal, action: string }) => {
-          result.active.close('cancelar');
-        });
+        this.handleConfirmModal(id, modal);
       }
     );
+  }
+
+  private handleConfirmModal(id: number, modal: NgbModalRef): void {
+    modal.componentInstance.message = 'Deseja realmente remover o Todo?';
+    modal.componentInstance.confirmEvent
+      .subscribe((result: { active: NgbActiveModal, action: string }) => {
+        result.active.close('sucesso');
+        this.todoService.delete(id).subscribe((response) => {
+          this.subscribeValueChanges();
+        }, error => {
+          result.active.close('falha');
+          this.handleErrorConfirmModal();
+        });
+      });
+
+    modal.componentInstance.cancelEvent
+      .subscribe((result: { active: NgbActiveModal, action: string }) => {
+        result.active.close('cancelar');
+      });
+  }
+
+  private handleErrorConfirmModal(): void {
+    this.modalService.openModal((_) => { }, 'error', 'Houve um erro na remoção da tarefa.');
   }
 }
