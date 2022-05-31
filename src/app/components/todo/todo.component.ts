@@ -105,11 +105,8 @@ export class TodoComponent implements OnInit, OnDestroy {
     if (!id) {
       this.subscription = this.todoService.create(todo).subscribe({
         next: (response) => {
-          if (response.status === 201) {
+          if (this.isStatusCreated(response)) {
             this.onSuccessResponse();
-          }
-          else if (response.status >= 400) {
-            this.onErrorResponse(null);
           }
         },
         error: e => {
@@ -123,15 +120,16 @@ export class TodoComponent implements OnInit, OnDestroy {
           if (this.isStatusOk(response)) {
             this.onSuccessResponse(false);
           }
-          else if (response.status >= 400 && response.status <= 499) {
-            this.onErrorResponse(null);
-          }
         },
         error: e => {
           this.onErrorResponse(e);
         }
       });
     }
+  }
+
+  private isStatusCreated(response: HttpResponse<any>): boolean {
+    return response.status === 201;
   }
 
   private isStatusOk(response: HttpResponse<any>): boolean {
