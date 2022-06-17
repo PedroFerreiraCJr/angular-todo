@@ -9,8 +9,9 @@ import { BreadCrumbService } from '../bread-crumb/bread-crumb.service';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
 import { ModalService } from '../modal/modal.service';
 import { TodoService } from '../todo/todo.service';
+import { ConfirmationModalHandler } from './confirmation-modal-handler';
 
-import { NgbActiveModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-todo-list',
@@ -44,7 +45,7 @@ export class TodoListComponent implements OnInit {
     BreadCrumbService.publishComponent('Listagem');
   }
 
-  private subscribeValueChanges(): void {
+  public subscribeValueChanges(): void {
     this.todos$ = this.form.get('search')?.valueChanges.pipe(
       tap(console.log),
       startWith(''),
@@ -122,25 +123,10 @@ export class TodoListComponent implements OnInit {
   }
 
   private handleConfirmModal(id: number, modal: NgbModalRef): void {
-    modal.componentInstance.message = 'Deseja realmente remover o Todo?';
-    modal.componentInstance.confirmEvent
-      .subscribe((result: { active: NgbActiveModal, action: string }) => {
-        result.active.close('sucesso');
-        this.todoService.delete(id).subscribe((response) => {
-          this.subscribeValueChanges();
-        }, error => {
-          result.active.close('falha');
-          this.handleErrorConfirmModal();
-        });
-      });
-
-    modal.componentInstance.cancelEvent
-      .subscribe((result: { active: NgbActiveModal, action: string }) => {
-        result.active.close('cancelar');
-      });
+    new ConfirmationModalHandler(modal, this).handle(id, this.todoService);
   }
 
-  private handleErrorConfirmModal(): void {
+  public handleErrorConfirmModal(): void {
     this.modalService.openModal((_) => { }, 'error', 'Houve um erro na remoção da tarefa.');
   }
 }

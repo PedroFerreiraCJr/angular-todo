@@ -1,10 +1,3 @@
 {
-  "todos": [
-    {
-      "name": "Comprar Post-it",
-      "description": "Tenho que lembrar de compar Post-it",
-      "date": "2022-05-31T18:48:28.000Z",
-      "id": 2
-    }
-  ]
+  "todos": []
 }
