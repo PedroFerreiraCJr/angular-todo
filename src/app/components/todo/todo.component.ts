@@ -14,6 +14,7 @@ import { ModalService } from '../modal/modal.service';
 import { Context } from './submitter-strategy/context';
 import { TaskCreationSubmitter } from './task-creation-submitter';
 import { TaskUpdateSubmitter } from './task-update-submitter';
+import { MessagesType } from './abstract-task-submitter';
 
 @Component({
   selector: 'app-todo',
@@ -25,7 +26,9 @@ export class TodoComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   subscription!: Subscription;
   
+  private id: number | null = null;
   private submitted: boolean = false;
+  private readonly ctx = new Context();
 
   constructor(
     private readonly fb: FormBuilder,
@@ -43,17 +46,28 @@ export class TodoComponent implements OnInit, OnDestroy {
     BreadCrumbService.publishBase('Todo List');
     BreadCrumbService.publishComponent('Novo');
 
+    // captura o parâmetro passado para a rota
     this.route.paramMap.subscribe((params) => {
-      const id = params.get('id') as number | null;
-      if (id) {
-        this.todoService.getById(id).subscribe({
+      // se o parâmetro for null, então estamos criando uma nova tarefa, e portanto, não existe id
+      this.id = params.get('id') as number | null;
+      if (this.id) {
+        // caso exista id na rota ativa, busca os dados do Todo para editar no mesmo formulário de cadastro
+        this.todoService.getById(this.id).subscribe({
           next: todo => {
+            // prepara os dados para edição
             this.prepareEdit(todo);
           },
-          error: e => console.log(e)
+          error: e => this.modalService
+            .openMessageModal((result) => {
+              if (result && result == 'fechar') {
+                this.gotoListComponent();
+              }
+            }, MessagesType.DANGER, 'Falha no carregamento dos dados da tarefa para atualização')
         });
       }
     });
+
+    this.configureStrategy();
   }
 
   /**
@@ -77,6 +91,16 @@ export class TodoComponent implements OnInit, OnDestroy {
       name: todo.name,
       description: todo.description
     });
+  }
+
+  private gotoListComponent(): void {
+    setTimeout(() => {
+      this.router.navigate(['/list'], { relativeTo: this.route });
+    }, 500);
+  }
+
+  private configureStrategy(): void {
+    this.ctx.strategy = this.getTaskCreationSubmitterStrategy();
   }
 
   public fieldHasError(field: string, error: string): boolean {
@@ -135,38 +159,37 @@ export class TodoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const id = this.form.get('id')?.value;
-
+    
     const todo: Todo = {
       name: this.form.get('name')?.value,
       description: this.form.get('description')?.value,
       date: new Date()
     };
-
+    
     // remove a inscrição anterior, em caso de mais de uma tentativa de envio com falha
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-
-    const ctx = new Context();
-
-    if (this.isTaskCreation(id)) {
-      // o cliente deve selecionar qual algoritmo deve ser utilizado
-      ctx.strategy = this.getTaskCreationSubmitterStrategy();
-      this.subscription = ctx.execute(todo);
+    
+    /**
+     * Com base em uma flag, a classe cliente deve configurar o algoritmo a ser utilizado
+     * no objeto Contexto que mantem a referência para o Strategy.
+     */
+    if (this.isTaskCreation()) {
+      // A estratégia padrão é criação de tarefa, portanto, não é preciso configurar novamente
+      this.subscription = this.ctx.execute(todo);
     }
     else {
-      // o cliente deve selecionar qual algoritmo deve ser utilizado
-      ctx.strategy = this.getTaskUpdateSubmitterStrategy();
-      this.subscription = ctx.execute(id, todo);
+      this.ctx.strategy = this.getTaskUpdateSubmitterStrategy();
+      this.subscription = this.ctx.execute(this.id, todo);
     }
   }
   
   /**
    * Retorna verdadeiro caso o id seja falsy.
   */
-   private isTaskCreation(id: number): boolean {
-    return !id;
+   private isTaskCreation(): boolean {
+    return !this.id;
   }
 
   private getTaskCreationSubmitterStrategy(): TaskCreationSubmitter {
