@@ -1,7 +1,9 @@
+import { Injectable } from "@angular/core";
 import { Subscription } from "rxjs";
 
 import { SubmitterStrategy } from "./submitter-strategy";
 
+@Injectable()
 export class Context {
 
   private _strategy!: SubmitterStrategy;

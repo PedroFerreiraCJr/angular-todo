@@ -1,3 +1,4 @@
+import { Injectable } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 
 import { catchError, Subscription, throwError } from "rxjs";
@@ -10,6 +11,7 @@ import { ModalService } from "../modal/modal.service";
 import { SuccessResponse } from "./success-response.enum";
 import { ClientErrorResponse } from "./client-error-response.enum";
 
+@Injectable()
 export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements SubmitterStrategy {
 
   private _resetFormCallback!: () => void;
@@ -74,7 +76,7 @@ export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements Submit
             this.router.navigate(['/list'], { relativeTo: this.route });
           }, 500);
         }
-      } , MessagesType.SUCCESS, `Tarefa de id ${id} foi atualizada com sucesso!`);
+      } , MessagesType.SUCCESS, `Tarefa de id ${id} atualizada com sucesso!`);
     };
 
     this.onErrorResponseListener = (v: ClientErrorResponse) => {

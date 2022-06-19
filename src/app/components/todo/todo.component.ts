@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Injector, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,8 @@ import { MessagesType } from './abstract-task-submitter';
 @Component({
   selector: 'app-todo',
   templateUrl: './todo.component.html',
-  styleUrls: ['./todo.component.scss']
+  styleUrls: ['./todo.component.scss'],
+  providers: [Context, TaskCreationSubmitter, TaskUpdateSubmitter]
 })
 export class TodoComponent implements OnInit, OnDestroy {
 
@@ -37,7 +38,8 @@ export class TodoComponent implements OnInit, OnDestroy {
     private readonly location: Location,
     private readonly todoService: TodoService,
     private readonly modalService: ModalService,
-    private readonly toastService: AppToastService
+    private readonly toastService: AppToastService,
+    private readonly injector: Injector
   ) { }
 
   ngOnInit(): void {
@@ -67,7 +69,12 @@ export class TodoComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.configureStrategy();
+    if (this.isTaskCreation()) {
+      this.configureStrategy(() => this.injector.get<TaskCreationSubmitter>(TaskCreationSubmitter));
+    }
+    else {
+      this.configureStrategy(() => this.injector.get<TaskUpdateSubmitter>(TaskUpdateSubmitter));
+    }
   }
 
   /**
@@ -99,8 +106,32 @@ export class TodoComponent implements OnInit, OnDestroy {
     }, 500);
   }
 
-  private configureStrategy(): void {
-    this.ctx.strategy = this.getTaskCreationSubmitterStrategy();
+  /**
+   * Retorna verdadeiro caso o id seja falsy.
+  */
+   private isTaskCreation(): boolean {
+    return !this.id;
+  }
+
+  /**
+   * Esta função é responsável por receber uma factory de strategy e a partir do resultado da invocação
+   * da fábrica obter o strategy correto para ser utilizado no âmbito da classe Context.
+   * 
+   * Esse método configura as responsabilidades default dos strategies recebidos através do método
+   * configureSubmitterStrategy, que recebe o strategy e o configura
+  */
+  private configureStrategy(factory: () => any): void {
+    // solicita ao framework de injeção de dependência do angular que resolva a dependência da classe
+    // de serviço chamada TaskCreationSubmitter.
+    const concreteStrategy = factory.call(this);
+    this.configureSubmitterStrategy(concreteStrategy);
+    this.ctx.strategy = concreteStrategy;
+  }
+
+  private configureSubmitterStrategy(strategy: TaskCreationSubmitter | TaskUpdateSubmitter): void {
+    strategy.addDefaultListeners();
+    strategy.submittedCallback = () => this.submitted = true;
+    strategy.resetFormCallback = () => this.reset();
   }
 
   public fieldHasError(field: string, error: string): boolean {
@@ -158,7 +189,6 @@ export class TodoComponent implements OnInit, OnDestroy {
       this.form.get('description')?.markAsTouched();
       return;
     }
-
     
     const todo: Todo = {
       name: this.form.get('name')?.value,
@@ -173,38 +203,15 @@ export class TodoComponent implements OnInit, OnDestroy {
     
     /**
      * Com base em uma flag, a classe cliente deve configurar o algoritmo a ser utilizado
-     * no objeto Contexto que mantem a referência para o Strategy.
+     * no objeto Context que mantém a referência para o Strategy.
+     * 
+     * Essa configuração é feita no método ngOnInit() de ciclo de vida do componente.
      */
     if (this.isTaskCreation()) {
-      // A estratégia padrão é criação de tarefa, portanto, não é preciso configurar novamente
       this.subscription = this.ctx.execute(todo);
     }
     else {
-      this.ctx.strategy = this.getTaskUpdateSubmitterStrategy();
       this.subscription = this.ctx.execute(this.id, todo);
     }
-  }
-  
-  /**
-   * Retorna verdadeiro caso o id seja falsy.
-  */
-   private isTaskCreation(): boolean {
-    return !this.id;
-  }
-
-  private getTaskCreationSubmitterStrategy(): TaskCreationSubmitter {
-    const strategy = new TaskCreationSubmitter(this.todoService, this.modalService, this.route, this.router);
-    strategy.addDefaultListeners();
-    strategy.submittedCallback = () => this.submitted = true;
-    strategy.resetFormCallback = () => this.reset();
-    return strategy;
-  }
-
-  private getTaskUpdateSubmitterStrategy() {
-    const strategy = new TaskUpdateSubmitter(this.todoService, this.modalService, this.route, this.router);
-    strategy.addDefaultListeners();
-    strategy.submittedCallback = () => this.submitted = true;
-    strategy.resetFormCallback = () => this.reset();
-    return strategy;
   }
 }
