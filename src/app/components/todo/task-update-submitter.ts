@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from "@angular/router";
 
-import { Subscription } from "rxjs";
+import { catchError, Subscription, throwError } from "rxjs";
 
 import { Todo } from "src/app/model/todo.model";
 import { TodoService } from "./todo.service";
@@ -31,21 +31,42 @@ export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements Submit
   }
 
   public submit(id: number, todo: Todo): Subscription {
-    return this.todoService.update(id, todo).subscribe({
-      next: (res) => {
+    return this.todoService.update(id, todo)
+      /**
+       * Captura erros comuns que podem ser tratados na classe de serviço ao invés do
+       * tratamento direto no componente.
+      */
+      .pipe(
+        catchError((e) => {
+          console.log('erro recebido na atualização de tarefa', e);
+          /**
+           * Repassa o erro para quem fez o subscribe. Caso fosse retornado através
+           * do operador of() do RxJS, não seria apresentadda a modal de erro.
+          */
+          return throwError(() => e);
+        })
+      )
+      .subscribe(this.getResponseHandler());
+  }
+  
+  protected getResponseHandler(): any {
+    return {
+      next: (res: any) => {
         if (this.isStatusOk(res)) {
-          this.onSuccessResponse();
+          this.onSuccessResponse(res);
         }
       },
-      error: e => {
+      error: (e: any) => {
         this.onErrorResponse(e);
       }
-    });
+    }
   }
 
   public addDefaultListeners(): void {
-    this.onSuccessResponseListener = (_: SuccessResponse) => {
+    this.onSuccessResponseListener = (_: SuccessResponse, value: any) => {
+      const id = value.body.id;
       this.modalService.openMessageModal((result) => {
+        console.log('resposta na atualização: ', value);
         if (!!this._resetFormCallback) this._resetFormCallback();
         if (result && result == 'fechar') {
           if (!!this._submittedCallback) this._submittedCallback();
@@ -53,7 +74,7 @@ export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements Submit
             this.router.navigate(['/list'], { relativeTo: this.route });
           }, 500);
         }
-      }, MessagesType.SUCCESS, Messages.TASK_COMPLETION_SUCCESS);
+      } , MessagesType.SUCCESS, `Tarefa de id ${id} foi atualizada com sucesso!`);
     };
 
     this.onErrorResponseListener = (v: ClientErrorResponse) => {
@@ -64,7 +85,6 @@ export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements Submit
 
       if (v == ClientErrorResponse.UNKNOWN) {
         this.modalService.openMessageModal((_) => { }, MessagesType.DANGER, Messages.TASK_COMPLETION_FAILED_GENERIC_MESSAGE);
-        return;
       }
     };
   }
@@ -72,8 +92,8 @@ export class TaskUpdateSubmitter extends AbstractTaskSubmitter implements Submit
   /**
    * Método da interface SubmitterStrategy que invoca a operação de envio dos dados para o backend.
   */
-  perform(...args: any): void {
+  perform(...args: any): Subscription {
     const [id, todo] = args[0];
-    this.submit(id, todo);
+    return this.submit(id, todo);
   }
 }

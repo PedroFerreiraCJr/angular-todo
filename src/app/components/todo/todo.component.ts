@@ -153,12 +153,12 @@ export class TodoComponent implements OnInit, OnDestroy {
     if (this.isTaskCreation(id)) {
       // o cliente deve selecionar qual algoritmo deve ser utilizado
       ctx.strategy = this.getTaskCreationSubmitterStrategy();
-      ctx.execute(todo);
+      this.subscription = ctx.execute(todo);
     }
     else {
       // o cliente deve selecionar qual algoritmo deve ser utilizado
       ctx.strategy = this.getTaskUpdateSubmitterStrategy();
-      ctx.execute(id, todo);
+      this.subscription = ctx.execute(id, todo);
     }
   }
   

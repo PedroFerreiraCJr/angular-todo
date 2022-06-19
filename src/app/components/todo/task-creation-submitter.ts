@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from "@angular/router";
 
-import { Subscription } from "rxjs";
+import { catchError, Subscription, throwError } from "rxjs";
 
 import { Todo } from "src/app/model/todo.model";
 import { TodoService } from "./todo.service";
@@ -31,20 +31,45 @@ export class TaskCreationSubmitter extends AbstractTaskSubmitter implements Subm
   }
 
   public submit(todo: Todo): Subscription {
-    return this.todoService.create(todo).subscribe({
-      next: (res) => {
-        if (this.isStatusCreated(res)) {
-          this.onSuccessResponse();
-        }
-      },
-      error: e => {
-        this.onErrorResponse(e);
-      }
-    });
+    return this.todoService.create(todo)
+      /**
+       * Captura erros comuns que podem ser tratados na classe de serviço ao invés do
+       * tratamento direto no componente.
+      */
+      .pipe(
+        catchError((e) => {
+          console.log('erro recebido na criação de tarefa', e);
+          /**
+           * Repassa o erro para quem fez o subscribe. Caso fosse retornado através
+           * do operador of() do RxJS, não seria apresentadda a modal de erro.
+          */
+          return throwError(() => e);
+        })
+      )
+      .subscribe(this.getResponseHandler());
   }
 
+  protected getResponseHandler(): any {
+    return {
+      next: (res: any) => {
+        if (this.isStatusCreated(res)) {
+          this.onSuccessResponse(res);
+        }
+      },
+      error: (e: any) => {
+        this.onErrorResponse(e);
+      }
+    }
+  }
+
+  /**
+   * Adiciona os tratadores de resposta do servidor, assim como o tratador de
+   * resposta de erro do servidor.
+  */
   public addDefaultListeners(): void {
-    this.onSuccessResponseListener = (_: SuccessResponse) => {
+    // configura o listener de resposta de sucesso
+    this.onSuccessResponseListener = (_: SuccessResponse, value: any) => {
+      const id = value.body.id;
       this.modalService.openMessageModal((result) => {
         if (!!this._resetFormCallback) this._resetFormCallback();
         if (result && result == 'fechar') {
@@ -53,7 +78,7 @@ export class TaskCreationSubmitter extends AbstractTaskSubmitter implements Subm
             this.router.navigate(['/list'], { relativeTo: this.route });
           }, 500);
         }
-      });
+      }, MessagesType.SUCCESS, `Tarefa de id ${id} foi criada com sucesso!`);
     };
 
     this.onErrorResponseListener = (v: ClientErrorResponse) => {
@@ -64,7 +89,6 @@ export class TaskCreationSubmitter extends AbstractTaskSubmitter implements Subm
 
       if (v == ClientErrorResponse.UNKNOWN) {
         this.modalService.openMessageModal((_) => { }, MessagesType.DANGER, Messages.TASK_COMPLETION_FAILED_GENERIC_MESSAGE);
-        return;
       }
     };
   }
@@ -72,8 +96,8 @@ export class TaskCreationSubmitter extends AbstractTaskSubmitter implements Subm
   /**
    * Método da interface SubmitterStrategy que invoca a operação de envio dos dados para o backend.
   */
-  perform(...args: any): void {
+  perform(...args: any): Subscription {
     const [todo] = args[0];
-    this.submit(todo);
+    return this.submit(todo);
   }
 }

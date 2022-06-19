@@ -17,19 +17,23 @@ export namespace Messages {
 
 export abstract class AbstractTaskSubmitter {
 
+  protected _onSuccessResponseListener!: (_: SuccessResponse, value: any) => void;
   protected _onErrorResponseListener!: (_: ClientErrorResponse) => void;
-  protected _onSuccessResponseListener!: (_: SuccessResponse) => void;
 
   constructor(
     protected readonly todoService: TodoService,
   ) { }
 
+  public set onSuccessResponseListener(listener: (result: SuccessResponse, value: any) => void) {
+    this._onSuccessResponseListener = listener;
+  }
+
   public set onErrorResponseListener(listener: (result: ClientErrorResponse) => void) {
     this._onErrorResponseListener = listener;
   }
 
-  public set onSuccessResponseListener(listener: (result: SuccessResponse) => void) {
-    this._onSuccessResponseListener = listener;
+  protected isStatusOk(response: HttpResponse<any>): boolean {
+    return response.status === 200;
   }
 
   protected isStatusCreated(response: HttpResponse<any>): boolean {
@@ -40,23 +44,20 @@ export abstract class AbstractTaskSubmitter {
     return !!(e && e.status && e.status >= 400 && e.status <= 499);
   }
 
-  protected isStatusOk(response: HttpResponse<any>): boolean {
-    return response.status === 200;
-  }
-
-  protected onSuccessResponse(): void {
+  protected onSuccessResponse(value: any): void {
     if (!!this._onSuccessResponseListener) {
-      this._onSuccessResponseListener(SuccessResponse.SUCCESS);
+      this._onSuccessResponseListener(SuccessResponse.SUCCESS, value);
     }
   }
 
   protected onErrorResponse(e: HttpErrorResponse | null): void {
     if (this.isStatusClientError(e)) {
-      this._onErrorResponseListener(ClientErrorResponse.CLIENT_ERROR);
-      
+      this._onErrorResponseListener(ClientErrorResponse.CLIENT_ERROR);  
       return;
     }
 
     this._onErrorResponseListener(ClientErrorResponse.UNKNOWN);
   }
+
+  protected abstract getResponseHandler(): any;
 }

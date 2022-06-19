@@ -1,4 +1,5 @@
-import { Todo } from "src/app/model/todo.model";
+import { Subscription } from "rxjs";
+
 import { SubmitterStrategy } from "./submitter-strategy";
 
 export class Context {
@@ -11,7 +12,7 @@ export class Context {
     this._strategy = strategy;
   }
   
-  public execute(...args: any) {
-    this._strategy.perform(args);
+  public execute(...args: any): Subscription {
+    return this._strategy.perform(args);
   }
 }

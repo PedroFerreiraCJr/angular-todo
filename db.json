@@ -1,3 +1,22 @@
 {
-  "todos": []
+  "todos": [
+    {
+      "name": "Comprar Post-it",
+      "description": "Tenho que lembrar de compar Post-it",
+      "date": "2022-06-19T13:38:47.466Z",
+      "id": 1
+    },
+    {
+      "name": "Comprar Post-it",
+      "description": "Tenho que lembrar de compar Post-it",
+      "date": "2022-06-19T13:42:35.413Z",
+      "id": 2
+    },
+    {
+      "name": "Comprar Leite",
+      "description": "Tenho que lembrar de comprar Leite.",
+      "date": "2022-06-19T13:46:54.340Z",
+      "id": 3
+    }
+  ]
 }

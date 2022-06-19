@@ -1,3 +1,5 @@
+import { Subscription } from "rxjs";
+
 export interface SubmitterStrategy {
-  perform(...args: any): void;
+  perform(...args: any): Subscription;
 }
