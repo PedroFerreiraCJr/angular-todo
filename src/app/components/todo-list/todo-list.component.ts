@@ -20,8 +20,8 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 })
 export class TodoListComponent implements OnInit {
 
-  todos$!: Observable<Todo[]> | undefined;
   form!: FormGroup;
+  todos$!: Observable<Todo[]> | undefined;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -47,7 +47,7 @@ export class TodoListComponent implements OnInit {
 
   public subscribeValueChanges(): void {
     this.todos$ = this.form.get('search')?.valueChanges.pipe(
-      tap(console.log),
+      // tap(console.log),
       startWith(''),
       distinctUntilChanged(),
       switchMap(value => this.todoService.list()
@@ -104,7 +104,7 @@ export class TodoListComponent implements OnInit {
   }
 
   private handleErrorModal(): void {
-    this.modalService.openModal((_) => { }, 'error', 'Parâmetro inválido.');
+    this.modalService.openMessageModal((_) => { }, 'error', 'Parâmetro inválido.');
   }
 
   private handleSuccessModal(id: number) {
@@ -127,6 +127,6 @@ export class TodoListComponent implements OnInit {
   }
 
   public handleErrorConfirmModal(): void {
-    this.modalService.openModal((_) => { }, 'error', 'Houve um erro na remoção da tarefa.');
+    this.modalService.openMessageModal((_) => { }, 'error', 'Houve um erro na remoção da tarefa.');
   }
 }

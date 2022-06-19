@@ -13,7 +13,7 @@ export class ModalService {
     private modalService: NgbModal
   ) { }
 
-  public openModal(callback: (result: any) => void, type?: string, message?: string) {
+  public openMessageModal(callback: (result: any) => void, type?: string, message?: string) {
     /**
      * Os parâmetro de configuração da modal (passados para o método open) são para
      * definir que ela não deve ser fechada caso o usuário clique fora, no
@@ -21,7 +21,7 @@ export class ModalService {
     */
     const modalRef = this.modalService.open(ModalComponent, { 'backdrop': 'static', 'keyboard': false });
     modalRef.componentInstance.type = type || 'success';
-    modalRef.componentInstance.message = message || 'Tarefa cadastrada com sucesso!';
+    modalRef.componentInstance.message = message || 'Tarefa cadastrada com sucesso';
     modalRef.result.then(callback);
   }
 

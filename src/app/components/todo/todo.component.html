@@ -21,7 +21,8 @@
       [ngClass]="{
         'is-valid': fieldDontHasAnyError('description'),
         'is-invalid': fieldHasError('description', 'required') || fieldHasError('description', 'minlength')
-      }">
+      }"
+      (keydown.enter)="onSubmit($event)">
     <div class="invalid-feedback" *ngIf="fieldHasError('description', 'required')">
       {{ getFieldError('description', 'required') }}
     </div>
@@ -30,7 +31,7 @@
     </div>
   </div>
   <div class="d-flex justify-content-end">
-    <button class="btn btn-secondary mt-2 mb-2" (click)="onCancel()">Cancelar</button>
-    <button class="btn btn-success mt-2 mb-2 ml-2" [disabled]="!form.valid" (click)="onSubmit()">Confirmar</button>
+    <button type="reset" class="btn btn-secondary mt-2 mb-2" (click)="onCancel()">Cancelar</button>
+    <button type="submit" class="btn btn-success mt-2 mb-2 ml-2" [disabled]="!form.valid" (click)="onSubmit($event)">Confirmar</button>
   </div>
 </form>

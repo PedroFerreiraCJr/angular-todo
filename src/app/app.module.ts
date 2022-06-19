@@ -14,6 +14,7 @@ import { BreadCrumbComponent } from './components/bread-crumb/bread-crumb.compon
 import { ModalComponent } from './components/modal/modal.component';
 import { AutofocusDirective } from './directives/autofocus.directive';
 import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { AppToastsComponent } from './components/toasts/app-toast/app-toast.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     BreadCrumbComponent,
     ModalComponent,
     AutofocusDirective,
-    ConfirmModalComponent
+    ConfirmModalComponent,
+    AppToastsComponent
   ],
   imports: [
     BrowserModule,
